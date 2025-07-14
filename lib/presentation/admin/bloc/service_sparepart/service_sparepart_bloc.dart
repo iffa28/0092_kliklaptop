@@ -15,6 +15,7 @@ class ServiceSparepartBloc extends Bloc<ServiceSparepartEvent, ServiceSparepartS
     on<AddSingleSparepart>(_onAddSingle);
     on<AddMultipleSpareparts>(_onAddMultiple);
     on<GetSparepartsByServiceId>(_onGetSpareparts);
+    
   }
 
   Future<void> _onAddSingle(

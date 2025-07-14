@@ -19,3 +19,4 @@ final class GetSparepartsByServiceId extends ServiceSparepartEvent {
 
   GetSparepartsByServiceId(this.serviceByAdminId);
 }
+
