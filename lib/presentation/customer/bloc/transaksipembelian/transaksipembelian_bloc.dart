@@ -19,6 +19,8 @@ class TransaksiPembelianBloc
     on<DeleteTransaksiPembelian>(_onDeleteTransaksi);
     on<UpdateTransaksiPembelian>(_onUpdateTransaksi);
     on<GetTransaksiPembelianById>(_onGetTransaksiById);
+    on<GetUserHistoryTransaction>(_onGetHistoryTransaction);
+    on<GetUserTransaction>(_onGetActiveTransactions);
   }
 
   Future<void> _onTransaksiRequested(
@@ -82,18 +84,15 @@ class TransaksiPembelianBloc
       buktiPembayaran: event.buktiPembayaran,
     );
 
-    result.fold(
-      (l) => emit(TransaksiPembelianFailure(error: l)),
-      (r) async {
-        emit(TransaksiPembelianSuccess(response: r));
-        // Reload list setelah update
-        final reload = await transaksiRepo.getAllTransactions();
-        reload.fold(
-          (l) => emit(TransaksiPembelianFailure(error: l)),
-          (r) => emit(TransaksiPembelianListSuccess(transaksiList: r)),
-        );
-      },
-    );
+    result.fold((l) => emit(TransaksiPembelianFailure(error: l)), (r) async {
+      emit(TransaksiPembelianSuccess(response: r));
+      // Reload list setelah update
+      final reload = await transaksiRepo.getAllTransactions();
+      reload.fold(
+        (l) => emit(TransaksiPembelianFailure(error: l)),
+        (r) => emit(TransaksiPembelianListSuccess(transaksiList: r)),
+      );
+    });
   }
 
   Future<void> _onGetTransaksiById(
@@ -107,6 +106,34 @@ class TransaksiPembelianBloc
     result.fold(
       (l) => emit(TransaksiPembelianFailure(error: l)),
       (r) => emit(TransaksiPembelianDetailSuccess(transaksi: r)),
+    );
+  }
+
+  Future<void> _onGetHistoryTransaction(
+    GetUserHistoryTransaction event,
+    Emitter<TransaksiPembelianState> emit,
+  ) async {
+    emit(TransaksiPembelianLoading());
+
+    final result = await transaksiRepo.getHistoryTransaction();
+
+    result.fold(
+      (l) => emit(TransaksiPembelianFailure(error: l)),
+      (r) => emit(TransaksiPembelianListSuccess(transaksiList: r)),
+    );
+  }
+
+  Future<void> _onGetActiveTransactions(
+    GetUserTransaction event,
+    Emitter<TransaksiPembelianState> emit,
+  ) async {
+    emit(TransaksiPembelianLoading());
+
+    final result = await transaksiRepo.getActiveTransaksiPembelianByUser();
+
+    result.fold(
+      (l) => emit(TransaksiPembelianFailure(error: l)),
+      (r) => emit(TransaksiPembelianListSuccess(transaksiList: r)),
     );
   }
 }
