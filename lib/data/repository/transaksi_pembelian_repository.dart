@@ -14,8 +14,7 @@ class TransaksiPembelianRepository {
   TransaksiPembelianRepository(this._serviceHttpClient);
 
   Future<Either<String, TransaksiPembelianResponseModel>>
-  addTransaksiPembelian({required Data data,
-    File? buktiPembayaran}) async {
+  addTransaksiPembelian({required Data data, File? buktiPembayaran}) async {
     try {
       final token = await _secureStorage.read(key: "authToken");
       final uri = Uri.parse(
@@ -42,7 +41,7 @@ class TransaksiPembelianRepository {
 
       if (streamedResponse.statusCode == 201) {
         final transactioResponse = TransaksiPembelianResponseModel.fromJson(
-          responseBody
+          responseBody,
         );
         return Right(transactioResponse);
       } else {
@@ -92,18 +91,15 @@ class TransaksiPembelianRepository {
   }
 
   // Update transaksi
-  Future<Either<String, TransaksiPembelianResponseModel>> updateTransaksiPembelian({
-    required Data data,
-    File? buktiPembayaran,
-  }) async {
+  Future<Either<String, TransaksiPembelianResponseModel>>
+  updateTransaksiPembelian({required Data data, File? buktiPembayaran}) async {
     try {
       final token = await _secureStorage.read(key: "authToken");
       final uri = Uri.parse("${_serviceHttpClient.baseUrl}transaction/$id");
 
       final request = http.MultipartRequest('POST', uri)
         ..headers['Authorization'] = 'Bearer $token'
-        ..headers['Accept'] = 'application/json'
-        ..fields['_method'] = 'PUT';
+        ..headers['Accept'] = 'application/json';
 
       if (data.productId != null) {
         request.fields['product_id'] = data.productId.toString();
@@ -117,12 +113,13 @@ class TransaksiPembelianRepository {
         request.fields['status'] = data.status!;
       }
 
-
       if (buktiPembayaran != null) {
-        request.files.add(await http.MultipartFile.fromPath(
-          'bukti_pembayaran',
-          buktiPembayaran.path,
-        ));
+        request.files.add(
+          await http.MultipartFile.fromPath(
+            'bukti_pembayaran',
+            buktiPembayaran.path,
+          ),
+        );
       }
 
       final streamedResponse = await request.send();
@@ -144,7 +141,9 @@ class TransaksiPembelianRepository {
   Future<Either<String, String>> deleteTransaksi(int id) async {
     try {
       final token = await _secureStorage.read(key: "authToken");
-      final uri = Uri.parse("${_serviceHttpClient.baseUrl}transaction/$id/delete");
+      final uri = Uri.parse(
+        "${_serviceHttpClient.baseUrl}transaction/$id/delete",
+      );
 
       final response = await http.delete(
         uri,
@@ -166,4 +165,45 @@ class TransaksiPembelianRepository {
     }
   }
 
+  /// Ambil riwayat permintaan service dengan status 'perbaikan selesai'
+  Future<Either<String, List<Data>>> getHistoryTransaction() async {
+    try {
+      final response = await _serviceHttpClient.get(
+        "transaction-customer/history/all",
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        final List<Data> historyList = (decoded['data'] as List)
+            .map((item) => Data.fromMap(item))
+            .toList();
+        return Right(historyList);
+      } else {
+        final error = json.decode(response.body);
+        return Left(error['message'] ?? 'Gagal mengambil data history');
+      }
+    } catch (e) {
+      return Left("Terjadi kesalahan saat mengambil history: $e");
+    }
+  }
+
+  /// GET: Transaksi yang berjalan
+  Future<Either<String, List<Data>>> getActiveTransaksiPembelianByUser() async {
+    try {
+      final response = await _serviceHttpClient.get("transaction/active");
+
+      if (response.statusCode == 200) {
+        final decoded = json.decode(response.body);
+        final List<Data> list = (decoded['data'] as List)
+            .map((item) => Data.fromMap(item))
+            .toList();
+        return Right(list);
+      } else {
+        final error = json.decode(response.body);
+        return Left(error['message'] ?? 'Gagal mengambil data transaksi aktif');
+      }
+    } catch (e) {
+      return Left("Terjadi kesalahan saat mengambil data aktif: $e");
+    }
+  }
 }
