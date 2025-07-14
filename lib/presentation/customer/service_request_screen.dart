@@ -64,7 +64,7 @@ class _ServiceRequestScreenState extends State<ServiceRequestScreen> {
             ScaffoldMessenger.of(context).showSnackBar(
               const SnackBar(content: Text("✅ Permintaan berhasil dikirim")),
             );
-            Navigator.pop(context);
+            Navigator.pop(context, true);
           } else if (state is ServiceRequestFailure) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text("❌ ${state.error}")),
