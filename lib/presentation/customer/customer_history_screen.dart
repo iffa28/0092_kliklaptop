@@ -1,8 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'package:kliklaptop/data/model/response/servicerequest_response_model.dart';
-import 'package:kliklaptop/presentation/customer/bloc/servicer_request/service_request_bloc.dart';
+import 'customer_history_service_screen.dart';
+import 'customer_history_transaction_screen.dart';
 
 class CustomerHistoryScreen extends StatefulWidget {
   const CustomerHistoryScreen({super.key});
@@ -12,127 +10,100 @@ class CustomerHistoryScreen extends StatefulWidget {
 }
 
 class _CustomerHistoryScreenState extends State<CustomerHistoryScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<ServiceRequestBloc>().add(GetUserHistoryService());
-  }
+  int selectedIndex = 0; // 0 = Servis, 1 = Transaksi
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Riwayat Servis'),
-        backgroundColor: const Color(0xff1F509A),
-        foregroundColor: Colors.white,
-      ),
-      body: BlocBuilder<ServiceRequestBloc, ServiceRequestState>(
-        builder: (context, state) {
-          if (state is ServiceRequestLoading) {
-            return const Center(child: CircularProgressIndicator());
-          } else if (state is ServiceRequestFailure) {
-            return Center(child: Text("❌ ${state.error}"));
-          } else if (state is ServiceRequestListSuccess) {
-            final historyList = state.serviceList;
-
-            if (historyList.isEmpty) {
-              return const Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(Icons.history, size: 80, color: Colors.grey),
-                    SizedBox(height: 16),
-                    Text(
-                      "Belum ada riwayat servis",
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                  ],
-                ),
-              );
-            }
-
-            return ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: historyList.length,
-              itemBuilder: (context, index) {
-                final item = historyList[index];
-                return _buildHistoryCard(item);
-              },
-            );
-          }
-
-          return const SizedBox(); // fallback
-        },
+      body: Column(
+        children: [
+          _buildGradientAppBar(),
+          const SizedBox(height: 16),
+          _buildTabSelector(),
+          const SizedBox(height: 16),
+          Expanded(
+            child: selectedIndex == 0
+                ? const CustomerHistoryServiceScreen()
+                : const CustomerHistoryTransactionScreen(),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildHistoryCard(Data item) {
-    final status = item.status?.toLowerCase() ?? '';
-    final createdAt = item.createdAt != null
-        ? DateFormat('dd MMM yyyy').format(item.createdAt!)
-        : '-';
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-        leading: const Icon(Icons.build, color: Color(0xff1F509A)),
-        title: Text(
-          item.jenisLaptop ?? '-',
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+  Widget _buildGradientAppBar() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xff1F509A), Color(0xff81BFDA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+        boxShadow: [
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: const [
             Text(
-              "Keluhan: ${item.deskripsiKeluhan ?? '-'}",
-              style: const TextStyle(fontSize: 12),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-            Text(
-              "Tanggal: $createdAt",
-              style: const TextStyle(fontSize: 12, color: Colors.grey),
+              "RIWAYAT TRANSAKSI",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ],
         ),
-        trailing: _buildStatusChip(status),
       ),
     );
   }
 
-  Widget _buildStatusChip(String status) {
-    Color color;
-    switch (status) {
-      case 'berhasil':
-        color = Colors.green;
-        break;
-      case 'gagal':
-        color = Colors.red;
-        break;
-      default:
-        color = Colors.grey;
-    }
+  Widget _buildTabSelector() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        _buildTabButton("Servis", 0),
+        const SizedBox(width: 24),
+        _buildTabButton("Pembelian", 1),
+      ],
+    );
+  }
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        status.toUpperCase(),
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
+  Widget _buildTabButton(String title, int index) {
+    final isSelected = selectedIndex == index;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedIndex = index;
+        });
+      },
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? const Color(0xff1F509A) : Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 6),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: 3,
+            width: 60,
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xff1F509A) : Colors.transparent,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
       ),
     );
   }
