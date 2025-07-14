@@ -29,3 +29,7 @@ class DeleteTransaksiPembelian extends TransaksiPembelianEvent {
 
   DeleteTransaksiPembelian({required this.id});
 }
+
+class GetUserHistoryTransaction extends TransaksiPembelianEvent {}
+
+class GetUserTransaction extends TransaksiPembelianEvent {}
