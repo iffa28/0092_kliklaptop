@@ -1,4 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:kliklaptop/data/repository/auth_repository.dart';
+import 'package:kliklaptop/data/repository/product_repository.dart';
+import 'package:kliklaptop/data/repository/service_request_repository.dart';
+import 'package:kliklaptop/data/repository/service_sparepart_repository.dart';
+import 'package:kliklaptop/data/repository/servicebyadmin_repository.dart';
+import 'package:kliklaptop/data/repository/transaksi_pembelian_repository.dart';
+import 'package:kliklaptop/presentation/admin/bloc/product/product_bloc.dart';
+import 'package:kliklaptop/presentation/admin/bloc/service_sparepart/service_sparepart_bloc.dart';
+import 'package:kliklaptop/presentation/admin/bloc/servicebyadmin/servicebyadmin_bloc.dart';
+import 'package:kliklaptop/presentation/auth/bloc/loginbloc/login_bloc.dart';
+import 'package:kliklaptop/presentation/auth/bloc/registerbloc/register_bloc.dart';
+
+import 'package:kliklaptop/presentation/auth/login_view.dart';
+import 'package:kliklaptop/presentation/customer/bloc/camera/camera_bloc.dart';
+import 'package:kliklaptop/presentation/customer/bloc/servicer_request/service_request_bloc.dart';
+import 'package:kliklaptop/presentation/customer/bloc/transaksipembelian/transaksipembelian_bloc.dart';
+import 'package:kliklaptop/presentation/services/service_http_client.dart';
 
 void main() {
   runApp(const MyApp());
@@ -7,30 +25,55 @@ void main() {
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
-  // This widget is the root of your application.
+  // This widget is the root of your application. 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Flutter Demo',
-      theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // TRY THIS: Try running your application with "flutter run". You'll see
-        // the application has a purple toolbar. Then, without quitting the app,
-        // try changing the seedColor in the colorScheme below to Colors.green
-        // and then invoke "hot reload" (save your changes or press the "hot
-        // reload" button in a Flutter-supported IDE, or press "r" if you used
-        // the command line to start the app).
-        //
-        // Notice that the counter didn't reset back to zero; the application
-        // state is not lost during the reload. To reset the state, use hot
-        // restart instead.
-        //
-        // This works for code too, not just values: Most code changes can be
-        // tested with just a hot reload.
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider(
+          create: (context) =>
+              LoginBloc(authRepository: AuthRepository(ServiceHttpClient())),
+        ),
+
+        BlocProvider(
+          create: (context) =>
+              RegisterBloc(authRepository: AuthRepository(ServiceHttpClient())),
+        ),
+        BlocProvider(
+          create: (context) =>
+              ServiceRequestBloc(serviceRepo: ServiceRequestRepository(ServiceHttpClient())),
+        ),
+
+        BlocProvider(
+          create: (context) => CameraBloc(),
+        ),
+
+        BlocProvider(
+          create: (context) =>
+              ProductBloc(productRepo: ProductRepository(ServiceHttpClient())),
+        ),
+        BlocProvider(
+          create: (context) =>
+              TransaksiPembelianBloc(transaksiRepo: TransaksiPembelianRepository(ServiceHttpClient())),
+        ),
+        BlocProvider(
+          create: (context) =>
+              ServicebyadminBloc(serviceadminRepo: ServiceByAdminRepository(ServiceHttpClient())),
+        ),
+        BlocProvider(
+          create: (context) =>
+              ServiceSparepartBloc(repository: ServiceSparepartRepository(ServiceHttpClient())),
+        ),
+        
+      ],
+      child: MaterialApp(
+        debugShowCheckedModeBanner: false,
+        title: 'Flutter Demo',
+        theme: ThemeData(
+          colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
+        ),
+        home: const LoginView(),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
     );
   }
 }
