@@ -1,19 +1,44 @@
 import 'dart:convert';
 import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:intl/intl.dart';
 import 'package:kliklaptop/data/model/response/servicerequest_response_model.dart';
 import 'package:kliklaptop/presentation/admin/detail_perbaikan_by_admin.dart';
-import 'package:kliklaptop/presentation/admin/pembayaran_service_admin.dart';
 import 'package:kliklaptop/presentation/admin/perbaikanbyadmin_screen.dart';
+import 'package:kliklaptop/presentation/admin/tambah_sparepart_screen.dart';
 
-class DetailServiceScreen extends StatelessWidget {
+class DetailServiceScreen extends StatefulWidget {
   final Data service;
 
   const DetailServiceScreen({super.key, required this.service});
 
   @override
+  State<DetailServiceScreen> createState() => _DetailServiceScreenState();
+}
+
+class _DetailServiceScreenState extends State<DetailServiceScreen> {
+  String? userRole;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final storage = FlutterSecureStorage();
+    final role = await storage.read(key: "userRole");
+    setState(() {
+      userRole = role;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final service = widget.service;
+
     Uint8List? imageBytes;
     if (service.photo != null && service.photo!.isNotEmpty) {
       try {
@@ -23,10 +48,7 @@ class DetailServiceScreen extends StatelessWidget {
       }
     }
 
-    final currencyFormat = NumberFormat.currency(
-      locale: 'id_ID',
-      symbol: 'Rp ',
-    );
+    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ');
 
     return Scaffold(
       appBar: AppBar(
@@ -66,78 +88,60 @@ class DetailServiceScreen extends StatelessWidget {
                   : '-',
             ),
             const SizedBox(height: 30),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: service.id == null
-                    ? null
-                    : () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => PerbaikanByAdminScreen(
-                              serviceId: service.id!,
+
+            /// ✅ Tombol hanya muncul jika admin
+            if (userRole == 'admin') ...[
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: service.id == null
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => PerbaikanByAdminScreen(serviceId: service.id!),
                             ),
-                          ),
-                        );
-                      },
-                icon: const Icon(Icons.build),
-                label: const Text('Konfirmasi Perbaikan'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xff1F509A),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+                          );
+                        },
+                  icon: const Icon(Icons.build),
+                  label: const Text('Konfirmasi Perbaikan'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xff1F509A),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Center(
-              child: ElevatedButton.icon(
-                onPressed: service.id == null
-                    ? null
-                    : () {
-                        showDialog(
-                          context: context,
-                          builder: (ctx) => AlertDialog(
-                            title: const Text('Pembayaran'),
-                            content: const Text('Apakah Anda ingin melanjutkan ke halaman pembayaran?'),
-                            actions: [
-                              TextButton(
-                                onPressed: () => Navigator.of(ctx).pop(),
-                                child: const Text('Batal'),
-                              ),
-                              ElevatedButton(
-                                onPressed: () {
-                                  Navigator.of(ctx).pop();
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (_) => PembayaranServiceAdmin(
-                                        serviceId: service.id!,
-                                      ),
-                                    ),
-                                  );
-                                },
-                                child: const Text('Lanjut'),
-                              ),
-                            ],
-                          ),
-                        );
-                      },
-                icon: const Icon(Icons.payment),
-                label: const Text('Pembayaran'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.green,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+              const SizedBox(height: 16),
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: service.id == null
+                      ? null
+                      : () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => TambahSparepartScreen(serviceByAdminId: service.id!),
+                            ),
+                          );
+                        },
+                  icon: const Icon(Icons.settings),
+                  label: const Text('Ganti Sparepart'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
+
             const SizedBox(height: 20),
             const Divider(color: Colors.grey, thickness: 1),
             const SizedBox(height: 20),
@@ -149,7 +153,7 @@ class DetailServiceScreen extends StatelessWidget {
                     isScrollControlled: true,
                     backgroundColor: Colors.transparent,
                     builder: (context) => Container(
-                      height: MediaQuery.of(context).size.height * 0.5,
+                      height: MediaQuery.of(context).size.height * 0.8,
                       decoration: const BoxDecoration(
                         color: Colors.white,
                         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
