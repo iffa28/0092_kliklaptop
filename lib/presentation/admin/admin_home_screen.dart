@@ -19,7 +19,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
       context: context,
       builder: (_) => AlertDialog(
         title: const Text("Logout"),
-        content: const Text("Yakin ingin keluar?"),
+        content: const Text("Yakin ingin keluar dari akun?"),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
@@ -28,7 +28,11 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           TextButton(
             onPressed: () {
               Navigator.pop(context);
-              // TODO: Tambahkan aksi logout sebenarnya di sini
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const LoginView()),
+                (Route<dynamic> route) => false,
+              );
             },
             child: const Text("Logout"),
           ),
@@ -109,14 +113,7 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             tooltip: 'Logout',
-            onPressed: () {
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const LoginView()),
-                (Route<dynamic> route) => false,
-              );
-              // Navigator.pushReplacementNamed(context, '/login'); // contoh redirect
-            },
+            onPressed: _logout,
             color: Colors.white,
           ),
           const SizedBox(width: 10),
@@ -158,10 +155,10 @@ class _AdminHomeScreenState extends State<AdminHomeScreen> {
             },
           ),
           _buildCard(
-            icon: Icons.build_circle_outlined,
+            icon: Icons.bar_chart_outlined,
             title: "Laporan",
             onTap: () {
-              // TODO: Navigasi ke halaman manajemen service
+              // TODO: Tambahkan navigasi ke halaman laporan
             },
           ),
         ],
