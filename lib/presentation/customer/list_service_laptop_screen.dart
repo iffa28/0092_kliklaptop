@@ -1,170 +1,120 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:kliklaptop/data/model/response/servicerequest_response_model.dart';
-import 'package:kliklaptop/presentation/customer/bloc/servicer_request/service_request_bloc.dart';
-import 'package:kliklaptop/presentation/admin/detail_service_screen.dart'; // pastikan impor ini sesuai path
+import 'package:kliklaptop/presentation/customer/customer_status_aktif_pembelian.dart';
+import 'package:kliklaptop/presentation/customer/customer_status_aktif_service.dart';
 
 class ListServiceLaptopScreen extends StatefulWidget {
   const ListServiceLaptopScreen({super.key});
 
   @override
-  State<ListServiceLaptopScreen> createState() =>
-      _ListServiceLaptopScreenState();
+  State<ListServiceLaptopScreen> createState() => _ListServiceLaptopScreenState();
 }
 
 class _ListServiceLaptopScreenState extends State<ListServiceLaptopScreen> {
-  @override
-  void initState() {
-    super.initState();
-    context.read<ServiceRequestBloc>().add(
-          GetUserService(),
-        ); // gunakan event yang ambil data aktif
-  }
+  int selectedIndex = 0; // 0 = servis, 1 = pembelian
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Servis Laptop Aktif'),
-        centerTitle: true,
-        backgroundColor: Colors.indigo,
-      ),
-      body: BlocBuilder<ServiceRequestBloc, ServiceRequestState>(
-        builder: (context, state) {
-          if (state is ServiceRequestLoading) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (state is ServiceRequestFailure) {
-            return Center(
-              child: Text(
-                'Gagal memuat data: ${state.error}',
-                style: const TextStyle(color: Colors.red),
-              ),
-            );
-          }
-
-          if (state is ServiceRequestListSuccess) {
-            final List<Data> services = state.serviceList;
-
-            if (services.isEmpty) {
-              return const Center(
-                child: Text('Belum ada servis aktif saat ini.'),
-              );
-            }
-
-            return ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: services.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final service = services[index];
-
-                return Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    borderRadius: BorderRadius.circular(12),
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => DetailServiceScreen(service: service),
-                        ),
-                      );
-                    },
-                    child: Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 4,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.laptop_mac,
-                                  size: 28,
-                                  color: Colors.indigo,
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    service.jenisLaptop ?? 'Jenis tidak diketahui',
-                                    style: const TextStyle(
-                                      fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                _buildStatusChip(service.status),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            Text(
-                              'Keluhan: ${service.deskripsiKeluhan ?? '-'}',
-                              style: const TextStyle(fontSize: 14),
-                            ),
-                            const SizedBox(height: 8),
-                            if (service.createdAt != null)
-                              Text(
-                                'Tanggal: ${service.createdAt!.toLocal().toString().split(' ')[0]}',
-                                style: const TextStyle(
-                                  fontSize: 12,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          }
-
-          return const SizedBox(); // fallback
-        },
+      body: Column(
+        children: [
+          _buildGradientAppBar(),
+          _buildTabSelector(),
+          Expanded(
+            child: IndexedStack(
+              index: selectedIndex,
+              children: const [
+                CustomerStatusAktifService(),     // halaman servis
+                CustomerStatusAktifPembelian(), // halaman pembelian
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildStatusChip(String? status) {
-    Color color;
-    switch (status?.toLowerCase()) {
-      case 'menunggu konfirmasi':
-        color = Colors.blue;
-        break;
-      case 'dikonfirmasi':
-        color = Colors.orange;
-        break;
-      case 'sedang diperbaiki':
-        color = Colors.purple;
-        break;
-      case 'perbaikan selesai':
-        color = Colors.green;
-        break;
-      default:
-        color = Colors.grey;
-    }
-
+  Widget _buildGradientAppBar() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-      decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        border: Border.all(color: color),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        status ?? '-',
-        style: TextStyle(
-          color: color,
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          colors: [Color(0xff1F509A), Color(0xff81BFDA)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
+        boxShadow: [
+          BoxShadow(color: Colors.black26, blurRadius: 6, offset: Offset(0, 3)),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+             IconButton(
+              icon: const Icon(Icons.arrow_back, color: Colors.white),
+              onPressed: () {
+                Navigator.pop(context);
+              },
+            ),
+            SizedBox(width: 12),
+            Text(
+              "Status Layanan",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 22,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTabSelector() {
+    return Padding(
+      padding: const EdgeInsets.all(20.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          _buildTabButton("Status Servis", 0),
+          const SizedBox(width: 24),
+          _buildTabButton("Status Pembelian", 1),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTabButton(String title, int index) {
+    final isSelected = selectedIndex == index;
+
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          selectedIndex = index;
+        });
+      },
+      child: Column(
+        children: [
+          Text(
+            title,
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              color: isSelected ? const Color(0xff1F509A) : Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 6),
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            height: 3,
+            width: 60,
+            decoration: BoxDecoration(
+              color: isSelected ? const Color(0xff1F509A) : Colors.transparent,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        ],
       ),
     );
   }
