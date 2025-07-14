@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -20,11 +21,6 @@ class DetailPerbaikanAdminScreen extends StatelessWidget {
         serviceadminRepo: ServiceByAdminRepository(ServiceHttpClient()),
       )..add(GetServiceByAdminByServiceRequestId(serviceRequestId: serviceRequestId)),
       child: Scaffold(
-        appBar: AppBar(
-          title: const Text("Detail Perbaikan"),
-          backgroundColor: const Color(0xff1F509A),
-          foregroundColor: Colors.white,
-        ),
         body: BlocBuilder<ServicebyadminBloc, ServiceByAdminState>(
           builder: (context, state) {
             if (state is ServiceByAdminLoading) {
@@ -73,7 +69,10 @@ class DetailPerbaikanAdminScreen extends StatelessWidget {
                     if (s.serviceSpareparts != null && s.serviceSpareparts!.isNotEmpty)
                       ...s.serviceSpareparts!.map((sp) {
                         final harga = int.tryParse(
-                              sp.sparepart?.hargaSatuan?.replaceAll('.', '').replaceAll(',', '') ?? '0',
+                              sp.sparepart?.hargaSatuan
+                                      ?.replaceAll('.', '')
+                                      .replaceAll(',', '') ??
+                                  '0',
                             ) ??
                             0;
 
@@ -90,9 +89,7 @@ class DetailPerbaikanAdminScreen extends StatelessWidget {
                       }).toList()
                     else
                       const Text('-'),
-
                     const SizedBox(height: 30),
-
                     Center(
                       child: ElevatedButton.icon(
                         onPressed: s.id != null
@@ -100,7 +97,8 @@ class DetailPerbaikanAdminScreen extends StatelessWidget {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (_) => PembayaranServiceAdmin(serviceId: serviceRequestId),
+                                    builder: (_) =>
+                                        PembayaranServiceAdmin(serviceId: serviceRequestId),
                                   ),
                                 );
                               }
